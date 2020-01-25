@@ -11,8 +11,8 @@ powerful APRS digipeating and I-gate functionality for LoRa-APRS.
 ## Hardware
 
 The LoRa KISS TNC runs on Raspberry Pi 2 or newer together with the
-*LoRa APRS Gateway Hat V2.0*. However, any 433MHz RFM95 LoRa module can be
-wired up to the Raspberry Pi.
+*LoRa APRS Gateway Hat V2.0*. However, RFM98W oder RFM96W LoRa modules can
+be wired up to the Raspberry Pi directly aswell.
 
 ![Gateway on RPi](doc/images/LoRa-APRS_Gateway_V20.jpg)
 
