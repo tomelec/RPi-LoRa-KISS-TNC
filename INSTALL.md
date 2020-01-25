@@ -33,7 +33,7 @@ to save and close the file do:
 `Strg + x` -> Y -> Enter
 
 ### Edit pySX127x/SX127x/board_config.py
-Type 'pico -w pySX127x/SX127x/board_config.py' and change in line 36
+Type ` pico -w pySX127x/SX127x/board_config.py` change in line 36
 from
 `DIO0 = 22   # RaspPi GPIO 22`<br/>
 to</br>
@@ -41,7 +41,7 @@ to</br>
 to fix the SPI connection #todo how can we config this from outside?
 
 ## Start the LoRa KISS TNC's
-python lora-tnc.py &`<br/>
+`python lora-tnc.py &`<br/>
 `sudo aprx -f aprx/aprx.conf.lora-aprs`
 
 
