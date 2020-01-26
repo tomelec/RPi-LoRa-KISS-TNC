@@ -15,12 +15,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #from multiprocessing import Queue
-import Queue
+from __future__ import print_function
+import sys
+is_py2 = sys.version[0] == '2'
+if is_py2:
+    import Queue as Queue
+else:
+    import queue as Queue
 from kiss import encode_kiss, decode_kiss
 from TCPServer import KissServer
 from config import *
 
-import sys
 sys.path.insert(0, './pySX127x/')
 from SX127x.board_config import BOARD
 from SX127x.LoRa import *
@@ -60,17 +65,18 @@ class LoRaARPSHat(LoRa):
 		def on_rx_done(self):
 				payload = self.read_payload(nocheck=True)
 				if not payload:
-					print "No Payload!"
+					print("No Payload!")
 					return
 				rssi = self.get_pkt_rssi_value()
 				snr = self.get_pkt_snr_value()
 				data = ''.join([chr(c) for c in payload])
-				print "LoRa RX[%idBm/%idB, %ibytes]: %s" %(rssi, snr, len(data), data.encode("string_escape"))
+				#data = b''.join([chr(c) for c in payload])
+				print("LoRa RX[%idBm/%idB, %ibytes]: %s" %(rssi, snr, len(data), repr(data)))
 
 				flags = self.get_irq_flags()
 				if any([flags[s] for s in ['crc_error', 'rx_timeout']]):
-					print "Receive Error, discarding frame."
-					#print self.get_irq_flags()
+					print("Receive Error, discarding frame.")
+					#print(self.get_irq_flags())
 					self.clear_irq_flags(RxDone=1, PayloadCrcError=1, RxTimeout=1) # clear rxdone IRQ flag
 					self.reset_ptr_rx()
 					self.set_mode(MODE.RXCONT)
@@ -87,20 +93,20 @@ class LoRaARPSHat(LoRa):
 					try:
 						encoded_data = encode_kiss(data)
 					except:
-						print "KISS encoding went wrong (exception while parsing)"
+						print("KISS encoding went wrong (exception while parsing)")
 						encoded_data = None
 					if encoded_data != None:
-						print "To Server: " + encoded_data.encode("string_escape")
+						print("To Server: " + repr(encoded_data))
 						self.server.send(encoded_data)
 					else:
-						print "KISS encoding went wrong"
+						print("KISS encoding went wrong")
 				self.clear_irq_flags(RxDone=1) # clear rxdone IRQ flag
 				self.reset_ptr_rx()
 				self.set_mode(MODE.RXCONT)
 				#self.set_mode(MODE.CAD)
 
 		def on_tx_done(self):
-				print "TX DONE"
+				print("TX DONE")
 				self.clear_irq_flags(TxDone=1) # clear txdone IRQ flag
 				self.set_dio_mapping([0] * 6)
 				self.set_mode(MODE.RXCONT)
@@ -151,14 +157,14 @@ if __name__ == '__main__':
 #				while f["cad_done"] == 0:
 #					time.sleep(0.05)
 #					f = lora.get_irq_flags()
-#					#print sf, MODE.lookup[lora.get_mode()], f
+#					#print(sf, MODE.lookup[lora.get_mode()], f)
 #				if f["cad_detected"]:
-#					print "DET SF %i" % sf
+#					print("DET SF %i" % sf)
 #					lora.set_mode(MODE.RXSINGLE)
 #					time.sleep(3)
 #				lora.clear_irq_flags(CadDone=1, CadDetected=1)
 #				f = lora.get_irq_flags()
-#				#print lora.get_irq_flags()
+#				#print((lora.get_irq_flags()))
 #			
 #		import sys
 #		sys.exit(0)
@@ -194,19 +200,19 @@ if __name__ == '__main__':
 		while True:
 				# only transmit if no signal is detected to avoid collisions
 				if not lora.get_modem_status()["signal_detected"]:
-					#print "RSSI: %idBm" % lora.get_rssi_value()
+					#print("RSSI: %idBm" % lora.get_rssi_value())
 					#FIXME: Add noise floor measurement for telemetry
 					if not  KissQueue.empty():
 						try:
 							data = KissQueue.get(block=False)
-							#print "KISS frame:" + data.encode("string_escape")
+							#print("KISS frame:" + repr(data))
 							decoded_data = decode_kiss(data)
-							#print "Decoded:" + decoded_data
+							#print("Decoded:" + decoded_data)
 							if aprs_data_type(decoded_data) == DATA_TYPE_THIRD_PARTY:
 								# remove third party thing
 								decoded_data = decoded_data[decoded_data.find(DATA_TYPE_THIRD_PARTY) + 1:]
 							decoded_data = LORA_APRS_HEADER + decoded_data
-							print "TX: " + decoded_data.encode("string_escape")
+							print("TX: " + repr(decoded_data))
 							lora.transmit(decoded_data)
 						except Queue.Empty:
 							pass

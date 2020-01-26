@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+from __future__ import print_function
 
 RECV_BUFFER_LENGTH	= 1024
 
@@ -9,7 +10,7 @@ from kiss import SerialParser
 
 def logf(message):
 	import sys
-	print >> sys.stderr, message
+	print(message, file=sys.stderr)
 
 class KissServer(Thread):
 		'''TCP Server to be connected by the APRS digipeater'''
@@ -63,7 +64,7 @@ if __name__ == '__main__':
 		while True:
 			#server.send("\xc0\x00\x82\xa0\xa4\xa6@@`\x9e\x8ar\xa8\x96\x90q\x03\xf0!4725.51N/00939.86E[322/002/A=001306 Batt=3.99V\xc0")
 			data = KissQueue.get()
-			print "Received KISS frame:" + data.encode("string_escape")
+			print("Received KISS frame:" + data.encode("unicode_escape"))
 
 
 

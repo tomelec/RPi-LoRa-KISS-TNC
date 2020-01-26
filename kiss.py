@@ -94,9 +94,9 @@ def encode_kiss(frame):
 	kiss_cmd = 0x00 # Two nybbles combined - TNC 0, command 0 (send data)
 	kiss_frame = [KISS_FEND, kiss_cmd] + packet_escaped + [KISS_FEND]
 	try:
-		output = str(bytearray(kiss_frame))
+		output = bytearray(kiss_frame)
 	except ValueError:
-		print "Invalid value in frame."
+		print("Invalid value in frame.")
 		return None 
 	return output
 
@@ -111,12 +111,12 @@ def decode_kiss(frame):
 		# DST
 		(dest_addr, dest_hrr, dest_ext) = decode_address(frame, pos)
 		pos += 7
-		#print "DST: " + dest_addr
+		#print("DST: " + dest_addr)
 
 		# SRC
 		(src_addr, src_hrr, src_ext) = decode_address(frame, pos)	
 		pos += 7
-		#print "SRC: " + src_addr
+		#print("SRC: " + src_addr)
 
 		result += src_addr.strip(" ")
 		result += ">" + dest_addr.strip(" ")
@@ -125,7 +125,7 @@ def decode_kiss(frame):
 		ext = src_ext
 		while ext == 0:
 				rpt_addr, rpt_hrr, ext = decode_address(frame, pos)
-				#print "RPT: " + rpt_addr
+				#print("RPT: " + rpt_addr)
 				pos += 7
 				result += "," + rpt_addr.strip(" ")
 
@@ -141,11 +141,11 @@ def decode_kiss(frame):
 				result += frame[pos:len(frame)-1]
 		elif (ctrl & 0x3) == 0x1:
 				#decode_sframe(ctrl, frame, pos)
-				print "SFRAME"
+				print("SFRAME")
 				return None
 		elif (ctrl & 0x1) == 0x0:
 				#decode_iframe(ctrl, frame, pos)
-				print "IFRAME"
+				print("IFRAME")
 				return None
 
 		return result
@@ -197,12 +197,12 @@ if __name__ == "__main__":
 	#print(decode_kiss(frame))
 	#encoded = encode_kiss("OE9TKH-8>APRS,RELAY,BLA:!4725.51N/00939.86E[322/002/A=001306 Batt=3")
 	#encoded = encode_kiss("OE9TKH-8>APRS,digi-3,digi-2:!4725.51N/00939.86E[322/002/A=001306 Batt=3")
-	#print (decode_kiss(encoded))
+	#print((decode_kiss(encoded)))
 
-	#print (decode_kiss("\xc0\x00\x82\xa0\xa4\xa6@@`\x9e\x8ar\xa8\x96\x90t\xae\x92\x88\x8ab@\x03\x03\xf0}OE9GHV-10>APMI06,TCPIP,OE9TKH-10*:@110104z4726.55N/00950.63E&WX3in1 op. Holger U=14.2V,T=8.8C\xc0"))
+	#print((decode_kiss("\xc0\x00\x82\xa0\xa4\xa6@@`\x9e\x8ar\xa8\x96\x90t\xae\x92\x88\x8ab@\x03\x03\xf0}OE9GHV-10>APMI06,TCPIP,OE9TKH-10*:@110104z4726.55N/00950.63E&WX3in1 op. Holger U=14.2V,T=8.8C\xc0")))
 
 	def newframe(frame):
-		print frame.encode("string_escape")
+		print(repr(frame))
 
 	two_example_frames = "\xc0\x00\x82\xa0\xa4\xa6@@`\x9e\x8ar\xa8\x96\x90u\x03\xf0}SOTA>APZS16,TCPIP,OE9TKH-10*::OE9TKH-8 :<Ass/Ref> <Freq> <Mode> [call] [comment]{7ba\xc0\xc0\x00\x82\xa0\xa4\xa6@@`\x9e\x8ar\xa8\x96\x90u\x03\xf0}SOTA>APZS16,TCPIP,OE9TKH-10*::OE9TKH-8 :/mylast{7bb\xc0\xc0\x00\x82\xa0\xa4\xa6@@`\x9e\x8ar\xa8\x96\x90u\x03\xf0}SOTA>APZS16,TCPIP,OE9TKH-10*::OE9TKH-8 :/last{7bc\xc0\xc0\x00\x82\xa0\xa4\xa6@@`\x9e\x8ar\xa8\x96\x90u\x03\xf0}SOTA>APZS16,TCPIP,OE9TKH-10*::OE9TKH-8 :/time(/zone){7bd\xc0"
 	sp = SerialParser(newframe)
