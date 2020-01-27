@@ -25,7 +25,7 @@ from LoraAprsKissTnc import LoraAprsKissTnc
 kissQueue = Queue()
 
 # TCP Server for the digipeater to connect
-server = KissServer(TCP_HOST, TCP_PORT, kissQueue)
+server = KissServer(kissQueue)
 server.setDaemon(True)
 server.start()
 
