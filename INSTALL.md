@@ -2,7 +2,7 @@
 
 ## Install needed packages
 `
-sudo apt install python3 aprx python-spidev screen git
+sudo apt install python3 python3-rpi.gpio python3-spidev aprx python-spidev screen git
 `
 
 ## Checkout the code
@@ -34,16 +34,15 @@ to save and close the file do:
 
 ### Edit pySX127x/SX127x/board_config.py
 Type ` pico -w pySX127x/SX127x/board_config.py` change in line 36
-from
-`DIO0 = 22   # RaspPi GPIO 22`<br/>
-to</br>
-`DIO0 = 5   # RaspPi GPIO 5`
+from<br/>
+`DIO0 = 22   # RaspPi GPIO 22`to<br/>
+`DIO0 = 5   # RaspPi GPIO 5`<br/>
 to fix the SPI connection #todo how can we config this from outside?
 
-## Start the LoRa KISS TNC's
-`python lora-tnc.py &`<br/>
+## Start the LoRa KISS TNC and aprx server instance
+`python3 Start.py &`<br/>
 `sudo aprx -f aprx/aprx.conf.lora-aprs`
 
 
 ## Stop the server
-`sudo killall aprx python`
+`sudo killall aprx python3`

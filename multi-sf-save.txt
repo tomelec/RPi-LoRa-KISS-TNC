@@ -1,0 +1,54 @@
+
+#	Experimental multi-SF reception. Does not yet work.
+#		lora.set_mode(MODE.STDBY)
+#		lora.set_mode(MODE.CAD)
+#		f = lora.get_irq_flags()
+#		while True:
+#
+#			for sf in [10, 11, 12]:
+#				#m = lora.get_mode() # important to keep pySX127x updated
+#				lora.set_mode(MODE.STDBY)
+#				lora.set_spreading_factor(sf)
+#				lora.set_mode(MODE.CAD)
+#				#time.sleep(0.001)
+#				while f["cad_done"] == 0:
+#					time.sleep(0.05)
+#					f = lora.get_irq_flags()
+#					#print(sf, MODE.lookup[lora.get_mode()], f)
+#				if f["cad_detected"]:
+#					print("DET SF %i" % sf)
+#					lora.set_mode(MODE.RXSINGLE)
+#					time.sleep(3)
+#				lora.clear_irq_flags(CadDone=1, CadDetected=1)
+#				f = lora.get_irq_flags()
+#				#print((lora.get_irq_flags()))
+#
+#		import sys
+#		sys.exit(0)
+
+#			if f["cad_done"]:
+#				lora.clear_irq_flags(CadDone=1)
+#				if f["cad_detected"]:
+#					lora.clear_irq_flags(CadDetected=1)
+#					lora.set_mode(MODE.RXSINGLE)
+#				else:
+#					if mode == 1:
+#						lora.set_spreading_factor(SPREADINGFACTOR)
+#						lora.set_low_data_rate_optim(True)
+#						mode = 2
+#					else:
+#						lora.set_spreading_factor(10)
+#						lora.set_low_data_rate_optim(False)
+#						mode = 1
+#					lora.set_mode(MODE.CAD)
+#			elif f["rx_timeout"]:
+#				lora.clear_irq_flags(RxTimeout=1)
+#				lora.set_mode(MODE.CAD)
+#
+#			if f["valid_header"]:
+#				lora.clear_irq_flags(ValidHeader=1)
+
+
+#			if lora.mode == MODE.RXCONT:
+#				lora.set_mode(MODE.CAD)
+#			time.sleep(0.001)
