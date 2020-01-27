@@ -17,17 +17,17 @@ def logf(message):
 class KissServer(Thread):
     '''TCP Server to be connected by the APRS digipeater'''
 
-    tx_queue = None
+    txQueue = None
 
     # host and port as configured in aprx/aprx.conf.lora-aprs < interface > section
-    def __init__(self, host="127.0.0.1", port=10001, tx_queue=None):
+    def __init__(self, txQueue, host="127.0.0.1", port=10001):
         Thread.__init__(self)
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.socket.bind((host, port))
         self.socket.listen(1)
         self.data = str()
-        self.tx_queue = tx_queue
+        self.txQueue = txQueue
         self.connection = None
 
     def run(self):
@@ -46,7 +46,7 @@ class KissServer(Thread):
                     break
 
     def queue_frame(self, frame):
-        self.tx_queue.put(frame, block=False)
+        self.txQueue.put(frame, block=False)
 
     def __del__(self):
         self.socket.shutdown()
