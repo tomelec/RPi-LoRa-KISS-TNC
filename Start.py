@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
 # This program is free software: you can redistribute it and/or modify
@@ -18,14 +18,14 @@
 #
 from queue import Queue
 from TCPServer import KissServer
-from config import *
+import config
 from LoraAprsKissTnc import LoraAprsKissTnc
 
 # TX KISS frames go here (Digipeater -> TNC)
 kissQueue = Queue()
 
 # TCP Server for the digipeater to connect
-server = KissServer(kissQueue)
+server = KissServer(kissQueue, config.TCP_HOST, config.TCP_PORT)
 server.setDaemon(True)
 server.start()
 
