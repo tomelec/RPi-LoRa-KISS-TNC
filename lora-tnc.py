@@ -17,6 +17,7 @@
 #from multiprocessing import Queue
 from __future__ import print_function
 import sys
+import traceback
 is_py2 = sys.version[0] == '2'
 if is_py2:
     import Queue as Queue
@@ -30,15 +31,15 @@ sys.path.insert(0, './pySX127x/')
 from SX127x.board_config import BOARD
 from SX127x.LoRa import *
 
-LORA_APRS_HEADER = "<\xff\x01"
+LORA_APRS_HEADER = b"<\xff\x01"
 
 # APRS data types
-DATA_TYPES_POSITION = "!'/@`"
-DATA_TYPE_MESSAGE = ":"
-DATA_TYPE_THIRD_PARTY = "}"
+DATA_TYPES_POSITION = b"!'/@`"
+DATA_TYPE_MESSAGE = b":"
+DATA_TYPE_THIRD_PARTY = b"}"
 
 def aprs_data_type(lora_aprs_frame):
-	delimiter_position = lora_aprs_frame.find(":")
+	delimiter_position = lora_aprs_frame.find(b":")
 	try:
 		return lora_aprs_frame[delimiter_position + 1]
 	except IndexError:
@@ -69,8 +70,7 @@ class LoRaARPSHat(LoRa):
 					return
 				rssi = self.get_pkt_rssi_value()
 				snr = self.get_pkt_snr_value()
-				data = ''.join([chr(c) for c in payload])
-				#data = b''.join([chr(c) for c in payload])
+				data = bytes(payload)
 				print("LoRa RX[%idBm/%idB, %ibytes]: %s" %(rssi, snr, len(data), repr(data)))
 
 				flags = self.get_irq_flags()
@@ -89,11 +89,12 @@ class LoRaARPSHat(LoRa):
 					if APPEND_SIGNAL_REPORT:
 						# Signal report only for certain frames, not messages!
 						if aprs_data_type(data) in DATA_TYPES_POSITION:
-							data += " RSSI=%idBm SNR=%idB" % (rssi, snr)
+							data += b" RSSI=%idBm SNR=%idB" % (rssi, snr)
 					try:
 						encoded_data = encode_kiss(data)
 					except:
 						print("KISS encoding went wrong (exception while parsing)")
+						traceback.print_tb(sys.exc_info())
 						encoded_data = None
 					if encoded_data != None:
 						print("To Server: " + repr(encoded_data))
@@ -112,7 +113,7 @@ class LoRaARPSHat(LoRa):
 				self.set_mode(MODE.RXCONT)
 
 		def transmit(self, data):
-			self.write_payload([ord(c) for c in data])
+			self.write_payload([c for c in data])
 			lora.set_dio_mapping([1,0,0,0,0,0])
 			self.set_mode(MODE.TX)
 
