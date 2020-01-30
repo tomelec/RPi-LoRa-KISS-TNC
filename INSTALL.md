@@ -66,7 +66,7 @@ to fix the SPI connection #todo how can we config this from outside?
 
 ## Start the LoRa KISS TNC and aprx server instance
 ```
-python3 Start.py &
+python3 Start_lora-tnc.py &
 sudo aprx
 ```
 

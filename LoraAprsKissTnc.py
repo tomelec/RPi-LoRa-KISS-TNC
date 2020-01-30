@@ -16,7 +16,7 @@
 
 import sys
 from asyncio import QueueEmpty
-
+import traceback
 sys.path.insert(0, './pySX127x/')
 from pySX127x.SX127x.LoRa import LoRa
 from pySX127x.SX127x.constants import *
@@ -26,12 +26,12 @@ import KissHelper
 
 
 class LoraAprsKissTnc(LoRa):
-    LORA_APRS_HEADER = "<\xff\x01"
+    LORA_APRS_HEADER = b"<\xff\x01"
 
     # APRS data types
-    DATA_TYPES_POSITION = "!'/@`"
-    DATA_TYPE_MESSAGE = ":"
-    DATA_TYPE_THIRD_PARTY = "}"
+    DATA_TYPES_POSITION = b"!'/@`"
+    DATA_TYPE_MESSAGE = b":"
+    DATA_TYPE_THIRD_PARTY = b"}"
 
     queue = None
     server = None
@@ -83,7 +83,7 @@ class LoraAprsKissTnc(LoRa):
                             # remove third party thing
                             decoded_data = decoded_data[decoded_data.find(self.DATA_TYPE_THIRD_PARTY) + 1:]
                         decoded_data = self.LORA_APRS_HEADER + decoded_data
-                        print("TX: ", decoded_data.encode("unicode_escape"))
+                        print("LoRa TX: " + repr(decoded_data))
                         self.transmit(decoded_data)
                     except QueueEmpty:
                         pass
@@ -97,9 +97,8 @@ class LoraAprsKissTnc(LoRa):
             return
         rssi = self.get_pkt_rssi_value()
         snr = self.get_pkt_snr_value()
-        data = ''.join([chr(c) for c in payload])
-        # data = b''.join([chr(c) for c in payload])
-        print("LoRa RX[%idBm/%idB, %ibytes]: %s" % (rssi, snr, len(data), data.encode("unicode_escape")))
+        data = bytes(payload)
+        print("LoRa RX[%idBm/%idB, %ibytes]: %s" %(rssi, snr, len(data), repr(data)))
 
         flags = self.get_irq_flags()
         if any([flags[s] for s in ['crc_error', 'rx_timeout']]):
@@ -117,11 +116,12 @@ class LoraAprsKissTnc(LoRa):
             if self.appendSignalReport:
                 # Signal report only for certain frames, not messages!
                 if self.aprs_data_type(data) in self.DATA_TYPES_POSITION:
-                    data += " RSSI=%idBm SNR=%idB" % (rssi, snr)
+                    data += b" RSSI=%idBm SNR=%idB" % (rssi, snr)
             try:
                 encoded_data = KissHelper.encode_kiss(data)
             except Exception as e:
-                print("KISS encoding went wrong (exception while parsing)", e)
+                print("KISS encoding went wrong (exception while parsing)")
+                traceback.print_tb(sys.exc_info())
                 encoded_data = None
 
             if encoded_data != None:
@@ -142,12 +142,12 @@ class LoraAprsKissTnc(LoRa):
         self.set_mode(MODE.RXCONT)
 
     def transmit(self, data):
-        self.write_payload([ord(c) for c in data])
+        self.write_payload([c for c in data])
         self.set_dio_mapping([1, 0, 0, 0, 0, 0])
         self.set_mode(MODE.TX)
 
     def aprs_data_type(self, lora_aprs_frame):
-        delimiter_position = lora_aprs_frame.find(":")
+        delimiter_position = lora_aprs_frame.find(b":")
         try:
             return lora_aprs_frame[delimiter_position + 1]
         except IndexError:

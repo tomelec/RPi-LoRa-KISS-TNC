@@ -38,12 +38,12 @@ KISS_TFESC = 0xDD  # If after an escape, means there was an 0xDB in the source m
 # If it's the final address in the header, set the low bit to 1
 # Ignoring command/response for simple example
 def encode_address(s, final):
-    if "-" not in s:
-        s = s + "-0"  # default to SSID 0
-    call, ssid = s.split('-')
+    if b"-" not in s:
+        s = s + b"-0"  # default to SSID 0
+    call, ssid = s.split(b'-')
     if len(call) < 6:
-        call = call + " " * (6 - len(call))  # pad with spaces
-    encoded_call = [ord(x) << 1 for x in call[0:6]]
+        call = call + b" "*(6 - len(call)) # pad with spaces
+    encoded_call = [x << 1 for x in call[0:6]]
     encoded_ssid = (int(ssid) << 1) | 0b01100000 | (0b00000001 if final else 0)
     return encoded_call + [encoded_ssid]
 
@@ -55,7 +55,7 @@ def decode_address(data, cursor):
     ext = a7 & 0x1
     addr = struct.pack("<BBBBBB", a1 >> 1, a2 >> 1, a3 >> 1, a4 >> 1, a5 >> 1, a6 >> 1)
     if ssid != 0:
-        call = "{}-{}".format(addr.strip(), ssid)
+        call = addr.strip() + "-{}".format(ssid).encode()
     else:
         call = addr
     return (call, hrr, ext)
@@ -63,15 +63,15 @@ def decode_address(data, cursor):
 
 def encode_kiss(frame):
     # Ugly frame disassembling
-    if not ":" in frame:
+    if not b":" in frame:
         return None
-    path = frame.split(":")[0]
-    src_addr = path.split(">")[0]
-    digis = path[path.find(">") + 1:].split(",")
+    path = frame.split(b":")[0]
+    src_addr = path.split(b">")[0]
+    digis = path[path.find(b">") + 1:].split(b",")
     # destination address
     packet = encode_address(digis.pop(0).upper(), False)
     # source address
-    packet += encode_address(path.split(">")[0].upper(), len(digis) == 0)
+    packet += encode_address(path.split(b">")[0].upper(), len(digis) == 0)
     # digipeaters
     for digi in digis:
         final_addr = digis.index(digi) == len(digis) - 1
@@ -81,7 +81,7 @@ def encode_kiss(frame):
     # protocol ID
     packet += [0xF0]  # No protocol
     # information field
-    packet += [ord(c) for c in frame[frame.find(":") + 1:]]
+    packet += frame[frame.find(b":") + 1:]
 
     # Escape the packet in case either KISS_FEND or KISS_FESC ended up in our stream
     packet_escaped = []
@@ -105,9 +105,10 @@ def encode_kiss(frame):
 
 
 def decode_kiss(frame):
-    result = ""
+    result = b""
     pos = 0
-    if frame[pos] != "\xc0" or frame[len(frame) - 1] != "\xc0":
+    if frame[pos] != 0xC0 or frame[len(frame) - 1] != 0xC0:
+        print(frame[pos], frame[len(frame) - 1])
         return None
     pos += 1
     pos += 1
@@ -115,31 +116,34 @@ def decode_kiss(frame):
     # DST
     (dest_addr, dest_hrr, dest_ext) = decode_address(frame, pos)
     pos += 7
-    # print("DST: " + dest_addr)
+    # print("DST: ", dest_addr)
 
     # SRC
     (src_addr, src_hrr, src_ext) = decode_address(frame, pos)
     pos += 7
-    # print("SRC: " + src_addr)
+    # print("SRC: ", src_addr)
 
-    result += src_addr.strip(" ")
-    result += ">" + dest_addr.strip(" ")
+    result += src_addr.strip()
+    # print(type(result), type(dest_addr.strip()))
+    result += b">" + dest_addr.strip()
 
     # REPEATERS
     ext = src_ext
     while ext == 0:
         rpt_addr, rpt_hrr, ext = decode_address(frame, pos)
-        # print("RPT: " + rpt_addr)
+        # print("RPT: ", rpt_addr)
         pos += 7
-        result += "," + rpt_addr.strip(" ")
+        result += b"," + rpt_addr.strip()
 
-    result += ":"
+    result += b":"
 
     # CTRL
-    (ctrl,) = struct.unpack("<B", frame[pos])
+    # (ctrl,) = struct.unpack("<B", frame[pos])
+    ctrl = frame[pos]
     pos += 1
     if (ctrl & 0x3) == 0x3:
-        (pid,) = struct.unpack("<B", frame[pos])
+        #(pid,) = struct.unpack("<B", frame[pos])
+        pid = frame[pos]
         # print("PID="+str(pid))
         pos += 1
         result += frame[pos:len(frame) - 1]
@@ -161,7 +165,7 @@ class SerialParser():
     STATE_IDLE = 0
     STATE_FEND = 1
     STATE_DATA = 2
-    KISS_FEND = chr(KISS_FEND)
+    KISS_FEND = KISS_FEND
 
     def __init__(self, frame_cb=None):
         self.frame_cb = frame_cb
@@ -169,23 +173,23 @@ class SerialParser():
 
     def reset(self):
         self.state = self.STATE_IDLE
-        self.cur_frame = ""
+        self.cur_frame = bytearray()
 
     def parse(self, data):
         '''Call parse with a string of one or more characters'''
         for c in data:
             if self.state == self.STATE_IDLE:
                 if c == self.KISS_FEND:
-                    self.cur_frame += c
+                    self.cur_frame.append(c)
                     self.state = self.STATE_FEND
             elif self.state == self.STATE_FEND:
                 if c == self.KISS_FEND:
                     self.reset()
                 else:
-                    self.cur_frame += c
+                    self.cur_frame.append(c)
                     self.state = self.STATE_DATA
             elif self.state == self.STATE_DATA:
-                self.cur_frame += c
+                self.cur_frame.append(c)
                 if c == self.KISS_FEND:
                     # frame complete
                     if self.frame_cb:

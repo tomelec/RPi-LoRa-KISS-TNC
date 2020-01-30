@@ -75,4 +75,4 @@ if __name__ == '__main__':
         server.send(
             "\xc0\x00\x82\xa0\xa4\xa6@@`\x9e\x8ar\xa8\x96\x90q\x03\xf0!4725.51N/00939.86E[322/002/A=001306 Batt=3.99V\xc0")
         data = KissQueue.get()
-        print("Received KISS frame:" + data.encode("unicode_escape"))
+        print("Received KISS frame:" + repr(data))
