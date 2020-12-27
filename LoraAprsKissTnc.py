@@ -22,7 +22,7 @@ from pySX127x.SX127x.LoRa import LoRa
 from pySX127x.SX127x.constants import *
 from pySX127x.SX127x.board_config import BOARD
 import time
-import KissHelper
+#import KissHelper
 
 
 class LoraAprsKissTnc(LoRa):
@@ -76,15 +76,12 @@ class LoraAprsKissTnc(LoRa):
                 if not self.queue.empty():
                     try:
                         data = self.queue.get(block=False)
-                        # print("KISS frame:", repr(data))
-                        decoded_data = KissHelper.decode_kiss(data)
-                        # print("Decoded:", decoded_data)
-                        if self.aprs_data_type(decoded_data) == self.DATA_TYPE_THIRD_PARTY:
+                        if self.aprs_data_type(data) == self.DATA_TYPE_THIRD_PARTY:
                             # remove third party thing
-                            decoded_data = decoded_data[decoded_data.find(self.DATA_TYPE_THIRD_PARTY) + 1:]
-                        decoded_data = self.LORA_APRS_HEADER + decoded_data
-                        print("LoRa TX: " + repr(decoded_data))
-                        self.transmit(decoded_data)
+                            data = data[data.find(self.DATA_TYPE_THIRD_PARTY) + 1:]
+                            data = self.LORA_APRS_HEADER + data
+                        print("LoRa TX: " + repr(data))
+                        self.transmit(data)
                     except QueueEmpty:
                         pass
 
@@ -117,18 +114,7 @@ class LoraAprsKissTnc(LoRa):
                 # Signal report only for certain frames, not messages!
                 if self.aprs_data_type(data) in self.DATA_TYPES_POSITION:
                     data += b" RSSI=%idBm SNR=%idB" % (rssi, snr)
-            try:
-                encoded_data = KissHelper.encode_kiss(data)
-            except Exception as e:
-                print("KISS encoding went wrong (exception while parsing)")
-                traceback.print_tb(sys.exc_info())
-                encoded_data = None
-
-            if encoded_data != None:
-                print("To Server: " + repr(encoded_data))
-                self.server.send(encoded_data)
-            else:
-                print("KISS encoding went wrong")
+            self.server.send(data)
         self.clear_irq_flags(RxDone=1)  # clear rxdone IRQ flag
         self.reset_ptr_rx()
         self.set_mode(MODE.RXCONT)

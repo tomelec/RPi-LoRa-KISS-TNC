@@ -3,14 +3,14 @@
 from __future__ import print_function
 
 RECV_BUFFER_LENGTH = 1024
-
+import sys
 from threading import Thread
 import socket
 from KissHelper import SerialParser
+import KissHelper
 
 
 def logf(message):
-    import sys
     print(message, file=sys.stderr)
 
 
@@ -46,14 +46,30 @@ class KissServer(Thread):
                     break
 
     def queue_frame(self, frame):
-        self.txQueue.put(frame, block=False)
+        print("KISS frame:", repr(data))
+        decoded_data = KissHelper.decode_kiss(frame)
+        print("Decoded:", decoded_data)
+        
+        self.txQueue.put(decoded_data, block=False)
 
     def __del__(self):
         self.socket.shutdown()
 
     def send(self, data):
-        if self.connection:
-            self.connection.sendall(data)
+        try:
+            encoded_data = KissHelper.encode_kiss(data)
+        except Exception as e:
+            print("KISS encoding went wrong (exception while parsing)")
+            traceback.print_tb(sys.exc_info())
+            encoded_data = None
+
+        if encoded_data != None:
+            print("To Server: " + repr(encoded_data))
+            if self.connection:
+                self.connection.sendall(encoded_data)
+        else:
+            print("KISS encoding went wrong")
+        
 
 
 if __name__ == '__main__':
