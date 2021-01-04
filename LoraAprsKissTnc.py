@@ -65,24 +65,27 @@ class LoraAprsKissTnc(LoRa):
         self.set_mode(MODE.RXCONT)
 
     def startListening(self):
-        while True:
-            # only transmit if no signal is detected to avoid collisions
-            if not self.get_modem_status()["signal_detected"]:
-                # print("RSSI: %idBm" % lora.get_rssi_value())
-                # FIXME: Add noise floor measurement for telemetry
-                if not self.queue.empty():
-                    try:
-                        data = self.queue.get(block=False)
-                        if self.aprs_data_type(data) == self.DATA_TYPE_THIRD_PARTY:
-                            # remove third party thing
-                            data = data[data.find(self.DATA_TYPE_THIRD_PARTY) + 1:]
-                            data = self.LORA_APRS_HEADER + data
-                        print("LoRa TX: " + repr(data))
-                        self.transmit(data)
-                    except QueueEmpty:
-                        pass
+        try:
+            while True:
+                # only transmit if no signal is detected to avoid collisions
+                if not self.get_modem_status()["signal_detected"]:
+                    # print("RSSI: %idBm" % lora.get_rssi_value())
+                    # FIXME: Add noise floor measurement for telemetry
+                    if not self.queue.empty():
+                        try:
+                            data = self.queue.get(block=False)
+                            if self.aprs_data_type(data) == self.DATA_TYPE_THIRD_PARTY:
+                                # remove third party thing
+                                data = data[data.find(self.DATA_TYPE_THIRD_PARTY) + 1:]
+                                data = self.LORA_APRS_HEADER + data
+                            print("LoRa TX: " + repr(data))
+                            self.transmit(data)
+                        except QueueEmpty:
+                            pass
 
-            time.sleep(0.50)
+                time.sleep(0.50)
+        except KeyboardInterrupt:
+            BOARD.teardown()
 
     def on_rx_done(self):
         payload = self.read_payload(nocheck=True)
