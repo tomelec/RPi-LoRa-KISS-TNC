@@ -18,19 +18,24 @@
 #
 from queue import Queue
 from TCPServer import KissServer
+from AXUDPServer import AXUDPServer
 import config
 from LoraAprsKissTnc import LoraAprsKissTnc
 
 # TX KISS frames go here (Digipeater -> TNC)
 kissQueue = Queue()
 
-# TCP Server for the digipeater to connect
-server = KissServer(kissQueue, config.TCP_HOST, config.TCP_PORT)
+# KISSTCP or AXUDP Server for the digipeater to connect
+if config.USE_AXUDP:
+  server = AXUDPServer(kissQueue, config.AXUDP_LOCAL_IP, config.AXUDP_LOCAL_PORT, config.AXUDP_REMOTE_IP, config.AXUDP_REMOTE_PORT)  
+else:
+  server = KissServer(kissQueue, config.TCP_HOST, config.TCP_PORT)
+
 server.setDaemon(True)
 server.start()
 
 # LoRa transceiver instance
-lora = LoraAprsKissTnc(kissQueue, server, verbose=False)
+lora = LoraAprsKissTnc(kissQueue, server, verbose=False, appendSignalReport = config.APPEND_SIGNAL_REPORT)
 
 # this call loops forever inside
 lora.startListening()

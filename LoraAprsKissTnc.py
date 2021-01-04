@@ -36,9 +36,6 @@ class LoraAprsKissTnc(LoRa):
     queue = None
     server = None
 
-    # Append signal report to beacon comment? Only for position frames.
-    appendSignalReport = True
-
     # init has LoRa APRS default config settings - might be initialized different when creating object with parameters
     def __init__(self, queue, server, frequency=433.775, preamble=8, spreadingFactor=12, bandwidth=BW.BW125,
                  codingrate=CODING_RATE.CR4_5, appendSignalReport = True, paSelect = 1, outputPower = 15, verbose=False):
