@@ -114,7 +114,7 @@ class LoraAprsKissTnc(LoRa):
                 # Signal report only for certain frames, not messages!
                 if self.aprs_data_type(data) in self.DATA_TYPES_POSITION:
                     data += b" RSSI=%idBm SNR=%idB" % (rssi, snr)
-            self.server.send(data)
+            self.server.send(data, {"level":rssi, "snr":snr})
         self.clear_irq_flags(RxDone=1)  # clear rxdone IRQ flag
         self.reset_ptr_rx()
         self.set_mode(MODE.RXCONT)

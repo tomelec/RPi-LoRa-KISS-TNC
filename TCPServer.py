@@ -55,7 +55,7 @@ class KissServer(Thread):
     def __del__(self):
         self.socket.shutdown()
 
-    def send(self, data):
+    def send(self, data, metadata):
         try:
             encoded_data = KissHelper.encode_kiss(data)
         except Exception as e:

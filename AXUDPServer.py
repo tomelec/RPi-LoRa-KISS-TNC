@@ -52,13 +52,14 @@ class AXUDPServer(Thread):
     def run(self):
         while True:
             frame = self.socket.recv(RECV_BUFFER_LENGTH)
+            print("TX:",self.axtostr(frame))
             self.txQueue.put(frame, block=False)
             
     def __del__(self):
         self.socket.shutdown()
 
-    def send(self, data):
-        self.sendax(data, (self.remoteHost, self.remotePort))
+    def send(self, data, metadata):
+        self.sendax(data, (self.remoteHost, self.remotePort), metadata)
         #self.socket.sendall(data)
 
     def axcall(self, text, pos):
@@ -120,17 +121,21 @@ class AXUDPServer(Thread):
         if values:
             a="\x01\x30"                                       #axudp v2 start
 
-            try: v=values["level"]
-            except: pass
-            else: a+="V"+str(round(v))+" "                     #axudp v2 append level
+            if 'level' in values.keys():
+                v=values["level"]
+                a+="V"+str(round(v))+" "                     #axudp v2 append level
 
-            try: v=values["quality"]
-            except: pass
-            else: a+="Q"+str(round(v))+" "                     #axudp v2 append quality
+            if 'quality' in values.keys():
+                v=values["quality"]
+                a+="Q"+str(round(v))+" "                     #axudp v2 append quality
 
-            try: v=values["txdel"]
-            except: pass
-            else: a+="T"+str(round(v))+" "                     #axudp v2 append quality
+            if 'txdel' in values.keys():
+                v=values["txdel"]
+                a+="T"+str(round(v))+" "                     #axudp v2 append quality
+
+            if 'snr' in values.keys():
+                v=values["snr"]
+                a+="S"+str(round(v))+" "                     #axudp v2 append snr
 
             a+="\x00"                                          #axudp2 end
 
@@ -157,6 +162,59 @@ class AXUDPServer(Thread):
         print(ip)
         res=sock.sendto(sa, ip)
 
+    ## RX:
+    def callstr(self, b, p):
+        s=""
+        for i in range(6):
+            ch=ord(b[p+i])>>1
+            if ch<32: s+="^"                                     #show forbidden ctrl in call
+            elif ch>32:s+=chr(ch)                                #call is filled with blanks
+        ssid=(ord(b[p+6])>>1) & 0x0f
+        if ssid: s+="-"+str(ssid)
+        return s
+    def axtostr(self, axbuf):
+        b=""
+        for x in axbuf: 
+            b+=chr(x)
+        le=len(b)
+        if le<2: 
+            return ""
+        le-=2
+        c=self.udpcrc(b, le)
+        if (b[le]!=chr(c & 0xff)) or (b[le+1]!=chr(c>>8)): 
+            return ""  #crc error
+
+        i=0
+        if axbuf[0]==1:                                         #axudp v2
+            while (i<len(axbuf)) and (axbuf[i]!=0): i+=1
+            i+=1
+        b=""
+        while i<len(axbuf):
+            b+=chr(axbuf[i])
+            i+=1
+        s=""
+        le=len(b)
+        if le>=18:                                             #2 calls + ctrl + pid + crc
+            le-=2
+            s=self.callstr(b, 7)                                      #src call
+            s+=">"+self.callstr(b, 0)                                 #destination call
+            p=14
+            hbit=False
+            while (((not (ord(b[p-1]) & 1)))) and (p+6<le):      #via path
+                if ord(b[p+6])>=128: 
+                    hbit=True
+                elif hbit:                                         #call before had hbit
+                    s+="*"
+                    hbit=False   
+                s+=","+callstr(b, p)
+                p+=7
+            if hbit: s+="*"                                      #last call had hbit
+            p+=2                                                 #pid, ctrl
+            s+=":"
+            while p<le:                                          #payload may contain ctrl characters
+                s+=b[p]
+                p+=1
+        return s
 if __name__ == '__main__':
     '''Test program'''
     import time
