@@ -53,7 +53,7 @@ class AXUDPServer(Thread):
         while True:
             frame = self.socket.recv(RECV_BUFFER_LENGTH)
             print("TX:",self.axtostr(frame))
-            self.txQueue.put(frame, block=False)
+            self.txQueue.put(self.axtostr(frame).encode('utf-8'), block=False)
             
     def __del__(self):
         self.socket.shutdown()

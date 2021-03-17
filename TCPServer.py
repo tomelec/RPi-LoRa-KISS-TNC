@@ -60,7 +60,7 @@ class KissServer(Thread):
             encoded_data = KissHelper.encode_kiss(data)
         except Exception as e:
             print("KISS encoding went wrong (exception while parsing)")
-            traceback.print_tb(sys.exc_info())
+            traceback.print_tb(e.__traceback__)
             encoded_data = None
 
         if encoded_data != None:
