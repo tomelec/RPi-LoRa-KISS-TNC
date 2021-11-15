@@ -46,7 +46,7 @@ class KissServer(Thread):
                     break
 
     def queue_frame(self, frame):
-        print("KISS frame:", repr(data))
+        print("KISS frame:", repr(frame))
         decoded_data = KissHelper.decode_kiss(frame)
         print("Decoded:", decoded_data)
         
