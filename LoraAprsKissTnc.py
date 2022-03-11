@@ -77,7 +77,7 @@ class LoraAprsKissTnc(LoRa):
                             if self.aprs_data_type(data) == self.DATA_TYPE_THIRD_PARTY:
                                 # remove third party thing
                                 data = data[data.find(self.DATA_TYPE_THIRD_PARTY) + 1:]
-                                data = self.LORA_APRS_HEADER + data
+                            data = self.LORA_APRS_HEADER + data
                             print("LoRa TX: " + repr(data))
                             self.transmit(data)
                         except QueueEmpty:
