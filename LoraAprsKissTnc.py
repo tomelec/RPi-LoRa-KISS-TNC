@@ -56,7 +56,7 @@ class LoraAprsKissTnc(LoRa):
         self.set_coding_rate(codingrate)
         self.set_ocp_trim(100)
 
-        self.set_pa_config(paSelect, outputPower)
+        self.set_pa_config(paSelect, 7, outputPower)
         self.set_max_payload_length(255)
         self.set_dio_mapping([0] * 6)
         self.server = server
